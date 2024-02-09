@@ -34,8 +34,7 @@ def create_timestamp(data: dict, date_today: str, event: str) -> None:
 
 
 def check_state_allowed(data: dict, date_today: str, event: str) -> bool:
-    data_today = data.get(date_today)
-    if data_today:
+    if data_today := data.get(date_today):
         last_event = data_today[-1].get("event")
         return last_event != event
     raise Exception("Couldn't find date entry in data file.")
@@ -61,10 +60,11 @@ app = typer.Typer()
 
 @app.command()
 def start():
-    if not db_file_existing():
-        create_file()
-    data = db_load()
     date_today = f"{date.today()}"
+    if not db_file_existing():
+        create_timestamp({date_today: []}, date_today, "start")
+        return
+    data = db_load()
     if check_state_allowed(data, date_today, "start"):
         create_entry(data, date_today)
         create_timestamp(data, date_today, "start")
