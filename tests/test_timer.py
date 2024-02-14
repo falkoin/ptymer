@@ -68,6 +68,6 @@ class TestState(TestCase):
         with self.assertRaises(Exception) as error:
             check_state_allowed(data, self.date_today, "start")
         # then
-        self.assertEqual("Couldn't find date entry in data file.", error.exception.args[0])
-
-
+        self.assertEqual(
+            "Couldn't find date entry in data file.", error.exception.args[0]
+        )

@@ -1,11 +1,10 @@
-from copy import deepcopy
-
+import sqlite3
+from sqlite3 import Connection
 import typer
-import json
 from datetime import datetime, timedelta, date
 from os import path
 
-FILE_NAME = "data.json"
+FILE_NAME = "ptymer.db"
 FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
@@ -13,41 +12,59 @@ def db_file_existing() -> bool:
     return path.isfile(f"./{FILE_NAME}")
 
 
-def db_load() -> dict:
-    with open(FILE_NAME, "r") as file:
-        return json.load(file)
+def db_create() -> None:
+    con = sqlite3.connect(FILE_NAME)
+    cur = con.cursor()
+    cur.execute("CREATE TABLE timestamp(date, event, time)")
 
 
-def create_entry(data: dict, today: str) -> dict:
-    if not data.get(today):
-        data[today] = []
-    return data
+def db_load() -> Connection:
+    return sqlite3.connect(FILE_NAME)
 
 
-def create_timestamp(data: dict, date_today: str, event: str) -> dict:
-    data[date_today].append({"event": event, "time": datetime.now().strftime(FORMAT)})
-    return data
+def create_timestamp(con: Connection, date_today: str, event: str) -> None:
+    cur = con.cursor()
+    cur.execute(
+        f"""
+        INSERT INTO timestamp VALUES
+            ('{date_today}', '{event}', '{datetime.now().strftime(FORMAT)}')
+    """
+    )
+    con.commit()
 
 
-def save_data(data: dict) -> None:
-    with open(FILE_NAME, "w+") as file:
-        file.seek(0)
-        json.dump(data, file)
-
-
-def check_state_allowed(data: dict, date_today: str, event: str) -> bool:
-    if data_today := data.get(date_today):
-        last_event = data_today[-1].get("event")
+def check_state_allowed(con: Connection, date_today: str, event: str) -> bool:
+    cur = con.cursor()
+    last_event = cur.execute(
+        f"""
+                             SELECT event FROM timestamp WHERE date='{date_today}' ORDER BY time DESC
+                             """
+    )
+    if last_event:
         return last_event != event
     return True
 
-def calc_duration(data: dict, date_today: str) -> None:
-    data_for_date = data.get(date_today)
-    if data_for_date:
-        all_times = [entry.get("time") for entry in data_for_date]
+
+def calc_duration(con: Connection, date_today: str) -> None:
+    cur = con.cursor()
+    times_start = cur.execute(
+        f"""
+                             SELECT time FROM timestamp WHERE date='{date_today}' AND event='start' ORDER BY time ASC
+                             """
+    ).fetchall()
+
+    times_stop = cur.execute(
+        f"""
+                             SELECT time FROM timestamp WHERE date='{date_today}' AND event='stop' ORDER BY time ASC
+                             """
+    ).fetchall()
+
+    if times_start:
+        if len(times_start) > len(times_stop):
+            times_stop.append((f"{datetime.now().strftime(FORMAT)}",))
         diff_times = [
-            datetime.strptime(x, FORMAT) - datetime.strptime(y, FORMAT)
-            for x, y in zip(all_times[1::2], all_times[::2])
+            datetime.strptime(x[0], FORMAT) - datetime.strptime(y[0], FORMAT)
+            for x, y in zip(times_stop, times_start)
         ]
 
         print(f"Worked for {sum(diff_times, timedelta())} hours")
@@ -60,18 +77,15 @@ app = typer.Typer()
 
 @app.command()
 def start():
-    date_today = f"{date.today()}"
     if not db_file_existing():
-        data = create_timestamp({date_today: []}, date_today, "start")
-        save_data(data)
-        return
-    data = db_load()
-    if check_state_allowed(data, date_today, "start"):
-        create_entry(data, date_today)
-        data = create_timestamp(data, date_today, "start")
-        save_data(data)
+        db_create()
+    date_today = f"{date.today()}"
+    con = db_load()
+    if check_state_allowed(con, date_today, "start"):
+        create_timestamp(con, date_today, "start")
     else:
         print("Session already running.")
+    con.close()
 
 
 @app.command()
@@ -79,15 +93,14 @@ def stop():
     if not db_file_existing():
         print("No session started, yet")
         return
-    data = db_load()
     date_today = f"{date.today()}"
-    if check_state_allowed(data, date_today, "stop"):
-        create_entry(data, date_today)
-        data = create_timestamp(data, date_today, "stop")
-        save_data(data)
-        calc_duration(data, date_today)
+    con = db_load()
+    if check_state_allowed(con, date_today, "stop"):
+        create_timestamp(con, date_today, "stop")
+        calc_duration(con, date_today)
     else:
         print("Session already stopped.")
+    con.close()
 
 
 @app.command()
@@ -95,11 +108,10 @@ def show():
     if not db_file_existing():
         print("No data to show")
         return
-    data = db_load()
     date_today = f"{date.today()}"
-    if check_state_allowed(data, date_today, "stop"):
-        data = create_timestamp(data, date_today, "stop")
-    calc_duration(data, date_today)
+    con = db_load()
+    calc_duration(con, date_today)
+    con.close()
 
 
 if __name__ == "__main__":
