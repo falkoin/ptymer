@@ -45,6 +45,11 @@ def check_state_allowed(con: Connection, date_today: str, event: str) -> bool:
     return True
 
 
+def output_with_timestamp(text: str) -> None:
+    FORMAT_TIME = "%H:%M:%S"
+    print(f"[{datetime.now().strftime(FORMAT_TIME)}]: " + text)
+
+
 def calc_duration(con: Connection, date_today: str) -> None:
     cur = con.cursor()
     times_start = cur.execute(
@@ -67,7 +72,7 @@ def calc_duration(con: Connection, date_today: str) -> None:
             for x, y in zip(times_stop, times_start)
         ]
 
-        print(f"Worked for {sum(diff_times, timedelta())} hours")
+        output_with_timestamp(f"Worked for {sum(diff_times, timedelta())} hours")
     else:
         raise Exception("Couldn't calculate duration for today")
 
@@ -83,6 +88,7 @@ def start():
     con = db_load()
     if check_state_allowed(con, date_today, "start"):
         create_timestamp(con, date_today, "start")
+        output_with_timestamp("Started working")
     else:
         print("Session already running.")
     con.close()
