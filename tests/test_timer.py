@@ -1,31 +1,18 @@
 from unittest import TestCase
-from unittest.mock import patch
-from app import check_state_allowed, create_entry, db_file_existing
-
-
-class TestCreateEntry(TestCase):
-
-    def setUp(self) -> None:
-        self.data = {"2024-01-01": [{"some_key": "some_value"}]}
-
-    def test_create_entry(self) -> None:
-        # when
-        result = create_entry(self.data, "2024-01-01")
-        # then
-        self.assertEqual(self.data, result)
-
-    def test_create_entry_new_day(self) -> None:
-        # when
-        today = "2024-12-12"
-        result = create_entry(self.data, today)
-        # then
-        self.assertEqual(self.data | {today: []}, result)
+from unittest.mock import call, MagicMock, patch
+from app import db_create, check_state_allowed, db_file_existing
+import sqlite3
 
 
 class TestDb(TestCase):
 
     def setUp(self) -> None:
         self.db_file = patch("os.path.isfile").start()
+        self.conn = sqlite3.connect(":memory:")
+        self.filename = "ptymer.db"
+
+    def tearDown(self):
+        self.conn.close()
 
     def test_db_file_existing(self) -> None:
         # given
@@ -33,7 +20,7 @@ class TestDb(TestCase):
         # when
         result = db_file_existing()
         # then
-        self.db_file.assert_called_with("./data.json")
+        self.db_file.assert_called_with(f"./{self.filename}")
         self.assertEqual(True, result)
 
     def test_db_file_not_existing(self) -> None:
@@ -42,32 +29,20 @@ class TestDb(TestCase):
         # when
         result = db_file_existing()
         # then
-        self.db_file.assert_called_with("./data.json")
+        self.db_file.assert_called_with(f"./{self.filename}")
         self.assertEqual(False, result)
 
-
-class TestState(TestCase):
-
-    def setUp(self) -> None:
-        self.date_today = "2024-01-01"
-
-    def test_check_state_allowed(self):
+    def test_db_create(self) -> None:
         # given
-        data = {self.date_today: [{"event": "start"}, {"event": "stop"}]}
+        sqlite = patch("app.sqlite3").start()
         # when
-        for event, expected in zip(("start", "stop"), (True, False)):
-            with self.subTest(f"event: {event}"):
-                result = check_state_allowed(data, self.date_today, event)
-                # then
-                self.assertEqual(expected, result)
-
-    def test_check_state_allowed_date_not_found(self):
-        # given
-        data = {"1999-01-01": []}
-        # when
-        with self.assertRaises(Exception) as error:
-            check_state_allowed(data, self.date_today, "start")
+        db_create()
         # then
-        self.assertEqual(
-            "Couldn't find date entry in data file.", error.exception.args[0]
-        )
+        sqlite.assert_has_calls(
+                [call.connect(self.filename),
+                 call.connect().cursor(),
+                 call.connect().cursor().execute(
+                     'CREATE TABLE timestamp(date, event, time)'
+                     )
+                 ]
+                )
