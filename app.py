@@ -25,10 +25,7 @@ def db_load() -> Connection:
 def create_timestamp(con: Connection, date_today: str, event: str) -> None:
     cur = con.cursor()
     cur.execute(
-        f"""
-        INSERT INTO timestamp VALUES
-            ('{date_today}', '{event}', '{datetime.now().strftime(FORMAT)}')
-    """
+        f"INSERT INTO timestamp VALUES ('{date_today}', '{event}', '{datetime.now().strftime(FORMAT)}')"
     )
     con.commit()
 
@@ -36,9 +33,7 @@ def create_timestamp(con: Connection, date_today: str, event: str) -> None:
 def check_state_allowed(con: Connection, date_today: str, event: str) -> bool:
     cur = con.cursor()
     last_event = cur.execute(
-        f"""
-                             SELECT event FROM timestamp WHERE date='{date_today}' ORDER BY time DESC
-                             """
+        f"SELECT event FROM timestamp WHERE date='{date_today}' ORDER BY time DESC"
     )
     if last_event:
         return last_event != event
@@ -50,31 +45,31 @@ def output_with_timestamp(text: str) -> None:
     print(f"[{datetime.now().strftime(FORMAT_TIME)}]: " + text)
 
 
-def calc_duration(con: Connection, date_today: str) -> None:
+def calc_worktime(con: Connection, date_today: str) -> timedelta:
     cur = con.cursor()
     times_start = cur.execute(
-        f"""
-                             SELECT time FROM timestamp WHERE date='{date_today}' AND event='start' ORDER BY time ASC
-                             """
+        f"SELECT time FROM timestamp WHERE date='{date_today}' AND event='start' ORDER BY time ASC"
     ).fetchall()
 
     times_stop = cur.execute(
-        f"""
-                             SELECT time FROM timestamp WHERE date='{date_today}' AND event='stop' ORDER BY time ASC
-                             """
+        f"SELECT time FROM timestamp WHERE date='{date_today}' AND event='stop' ORDER BY time ASC"
     ).fetchall()
 
     if times_start:
         if len(times_start) > len(times_stop):
             times_stop.append((f"{datetime.now().strftime(FORMAT)}",))
-        diff_times = [
-            datetime.strptime(x[0], FORMAT) - datetime.strptime(y[0], FORMAT)
-            for x, y in zip(times_stop, times_start)
-        ]
-
-        output_with_timestamp(f"Worked for {sum(diff_times, timedelta())} hours")
+        return calc_duration(times_stop, times_start)
     else:
         raise Exception("Couldn't calculate duration for today")
+
+
+def calc_duration(time_1: list[tuple], time_2: list[tuple]) -> timedelta:
+    diff_times = [
+            datetime.strptime(x[0], FORMAT) - datetime.strptime(y[0], FORMAT)
+            for x, y in zip(time_1, time_2)
+            ]
+    
+    return sum(diff_times, timedelta())
 
 
 app = typer.Typer()
@@ -103,7 +98,8 @@ def stop():
     con = db_load()
     if check_state_allowed(con, date_today, "stop"):
         create_timestamp(con, date_today, "stop")
-        calc_duration(con, date_today)
+        duration = calc_worktime(con, date_today)
+        output_with_timestamp(f"Worked for {duration} hours")
     else:
         print("Session already stopped.")
     con.close()
@@ -116,7 +112,8 @@ def show():
         return
     date_today = f"{date.today()}"
     con = db_load()
-    calc_duration(con, date_today)
+    duration = calc_worktime(con, date_today)
+    output_with_timestamp(f"Worked for {duration} hours")
     con.close()
 
 
