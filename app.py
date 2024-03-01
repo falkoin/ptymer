@@ -3,6 +3,7 @@ from sqlite3 import Connection
 import typer
 from datetime import datetime, timedelta, date
 from os import path
+from typing_extensions import Annotated
 
 FILE_NAME = "ptymer.db"
 FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -22,10 +23,11 @@ def db_load() -> Connection:
     return sqlite3.connect(FILE_NAME)
 
 
-def create_timestamp(con: Connection, date_today: str, event: str) -> None:
+def create_timestamp(con: Connection, date_today: str, event: str, delta: int) -> None:
+    time_stamp = (datetime.now() - timedelta(minutes=delta)).strftime(FORMAT)
     cur = con.cursor()
     cur.execute(
-        f"INSERT INTO timestamp VALUES ('{date_today}', '{event}', '{datetime.now().strftime(FORMAT)}')"
+        f"INSERT INTO timestamp VALUES ('{date_today}', '{event}', '{time_stamp}')"
     )
     con.commit()
 
@@ -40,9 +42,10 @@ def check_state_allowed(con: Connection, date_today: str, event: str) -> bool:
     return True
 
 
-def output_with_timestamp(text: str) -> None:
+def output_with_timestamp(text: str, delta: int = 0) -> None:
     FORMAT_TIME = "%H:%M:%S"
-    print(f"[{datetime.now().strftime(FORMAT_TIME)}]: " + text)
+    time_stamp = (datetime.now() - timedelta(minutes=delta)).strftime(FORMAT_TIME)
+    print(f"[{time_stamp}]: " + text)
 
 
 def calc_worktime(con: Connection, date_today: str) -> timedelta:
@@ -76,30 +79,30 @@ app = typer.Typer()
 
 
 @app.command()
-def start():
+def start(delta: Annotated[int, typer.Option(help="Time delta in minutes to start in the past.")] = 0):
     if not db_file_existing():
         db_create()
     date_today = f"{date.today()}"
     con = db_load()
     if check_state_allowed(con, date_today, "start"):
-        create_timestamp(con, date_today, "start")
-        output_with_timestamp("Started working")
+        create_timestamp(con, date_today, "start", delta)
+        output_with_timestamp("Started working", delta)
     else:
         print("Session already running.")
     con.close()
 
 
 @app.command()
-def stop():
+def stop(delta: Annotated[int, typer.Option(help="Time delta in minutes to start in the past.")] = 0):
     if not db_file_existing():
         print("No session started, yet")
         return
     date_today = f"{date.today()}"
     con = db_load()
     if check_state_allowed(con, date_today, "stop"):
-        create_timestamp(con, date_today, "stop")
+        create_timestamp(con, date_today, "stop", delta)
         duration = calc_worktime(con, date_today)
-        output_with_timestamp(f"Worked for {duration} hours")
+        output_with_timestamp(f"Worked for {duration} hours", delta)
     else:
         print("Session already stopped.")
     con.close()
