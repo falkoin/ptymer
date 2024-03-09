@@ -4,7 +4,9 @@ A CLI work timer written in Python.
 ## Usage
     app.py start
     app.py stop
-    app.py show
+    app.py show 
+    app.py start/stop --delta INTEGER
+    app.py --help
 
 ## TODO
 - [x] Migrate to SQLite
@@ -13,3 +15,4 @@ A CLI work timer written in Python.
 - [ ] Add more information to output
 - [ ] Make output more graphical
 - [ ] Add editing feature to entries
+- [ ] Show statistics
