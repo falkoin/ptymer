@@ -72,6 +72,7 @@ class TestDb(TestCase):
 
     def test_create_timestamp(self) -> None:
         # given
+        patch("app.Database._check_valid_timestamp", return_value=True).start()
         con = patch("app.sqlite3").start()
         today = patch("app.date", wraps=date).start()
         today.today.return_value = "2024-01-01"
@@ -92,6 +93,18 @@ class TestDb(TestCase):
                 call.connect().commit(),
             ]
         )
+
+    def test_create_timestamp_collision(self) -> None:
+        # given
+        patch("app.Database._check_valid_timestamp", return_value=False).start()
+        patch("app.sqlite3").start()
+        patch("app.Database._calc_time_stamp").start()
+        db = Database()
+        # when
+        with self.assertRaises(Exception) as e:
+            db.create_timestamp("start")
+        # then
+        self.assertEqual("Timestamp collision", str(e.exception))
 
     def test_check_state_allowed(self) -> None:
         # given
@@ -114,7 +127,7 @@ class TestDb(TestCase):
         # when
         time_stamp = db._calc_time_stamp(delta=10)
         # then
-        self.assertEqual("2024-01-01 16:50:00", time_stamp)
+        self.assertEqual(datetime(2024, 1, 1, 16, 50), time_stamp)
 
     def test_output_with_timestamp(self) -> None:
         # given
@@ -150,3 +163,27 @@ class TestDb(TestCase):
         duration = calc_duration(times_1, times_2)
         # then
         self.assertEqual(timedelta(hours=4), duration)
+
+    def test_check_valid_timestamp(self) -> None:
+        # given
+        db = Database()
+        patch(
+            "app.Database.get_times_by", return_value=[("2024-01-01 17:00:00",)]
+        ).start()
+        time_stamp = datetime.strptime("2024-01-01 17:10:00", "%Y-%m-%d %H:%M:%S")
+        # when
+        result = db._check_valid_timestamp(time_stamp, "start")
+        # then
+        self.assertTrue(result)
+
+    def test_check_invalid_timestamp(self) -> None:
+        # given
+        db = Database()
+        patch(
+            "app.Database.get_times_by", return_value=[("2024-01-01 17:00:00",)]
+        ).start()
+        time_stamp = datetime.strptime("2024-01-01 16:9:00", "%Y-%m-%d %H:%M:%S")
+        # when
+        result = db._check_valid_timestamp(time_stamp, "start")
+        # then
+        self.assertFalse(result)

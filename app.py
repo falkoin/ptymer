@@ -34,14 +34,23 @@ class Database:
     def create_timestamp(self, event: str, delta: int = 0) -> None:
         cur = self.con.cursor()
         time_stamp = self._calc_time_stamp(delta)
+        if not self._check_valid_timestamp(time_stamp, event):
+            raise Exception("Timestamp collision")
         cur.execute(
-            f"INSERT INTO timestamp VALUES ('{self.date_today}', '{event}', '{time_stamp}')"
+            f"INSERT INTO timestamp VALUES ('{self.date_today}', '{event}', '{time_stamp.strftime(FORMAT)}')"
         )
         self.con.commit()
 
+    def _check_valid_timestamp(self, time_stamp: datetime, event: str) -> bool:
+        times = self.get_times_by(event=event)
+        latest_time = datetime.strptime(times[0][0], "%Y-%m-%d %H:%M:%S")
+        if latest_time > time_stamp:
+            return False
+        return True
+
     @staticmethod
-    def _calc_time_stamp(delta: int) -> str:
-        return (datetime.now() - timedelta(minutes=delta)).strftime(FORMAT)
+    def _calc_time_stamp(delta: int) -> datetime:
+        return datetime.now() - timedelta(minutes=delta)
 
     def get_times_by(self, event: str, ascending: bool = True) -> list[Any]:
         cur = self.con.cursor()
@@ -106,7 +115,10 @@ def start(
 ):
     db = Database()
     if check_state_allowed(db, "start"):
-        db.create_timestamp("start", delta)
+        try:
+            db.create_timestamp("start", delta)
+        except Exception:
+            print("Timestamp collision with existing one")
         output_with_timestamp("Started working", delta)
     else:
         print("Session already running.")
@@ -124,7 +136,10 @@ def stop(
         return
     db = Database()
     if check_state_allowed(db, "stop"):
-        db.create_timestamp("stop", delta)
+        try:
+            db.create_timestamp("stop", delta)
+        except Exception:
+            print("Timestamp collision with existing one")
         duration = calc_worktime(db)
         output_with_timestamp(f"Worked for {duration} hours", delta)
     else:
