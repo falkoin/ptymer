@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, call, patch
+from database import Database
 from app import (
-    Database,
     calc_duration,
     check_state_allowed,
     db_file_existing,
@@ -37,7 +37,7 @@ class TestDb(TestCase):
 
     def test_db_create(self) -> None:
         # given
-        sqlite = patch("app.sqlite3").start()
+        sqlite = patch("database.sqlite3").start()
         patch("app.path.isfile", return_value=False).start()
         # when
         _ = Database()
@@ -54,7 +54,7 @@ class TestDb(TestCase):
 
     def test_db_close(self) -> None:
         # given
-        sqlite = patch("app.sqlite3").start()
+        sqlite = patch("database.sqlite3").start()
         db = Database()
         # when
         db.close()
@@ -63,7 +63,7 @@ class TestDb(TestCase):
 
     def test_db_load(self) -> None:
         # given
-        con = patch("app.sqlite3.connect", return_value={}).start()
+        con = patch("database.sqlite3.connect", return_value={}).start()
         # when
         db = Database()
         # then
@@ -73,10 +73,10 @@ class TestDb(TestCase):
     def test_create_timestamp(self) -> None:
         # given
         patch("app.Database._check_valid_timestamp", return_value=True).start()
-        con = patch("app.sqlite3").start()
-        today = patch("app.date", wraps=date).start()
+        con = patch("database.sqlite3").start()
+        today = patch("database.date", wraps=date).start()
         today.today.return_value = "2024-01-01"
-        now = patch("app.datetime", wraps=datetime).start()
+        now = patch("database.datetime", wraps=datetime).start()
         now.now.return_value = datetime.strptime(
             "2024-01-01 17:00:00", "%Y-%m-%d %H:%M:%S"
         )
@@ -97,7 +97,7 @@ class TestDb(TestCase):
     def test_create_timestamp_collision(self) -> None:
         # given
         patch("app.Database._check_valid_timestamp", return_value=False).start()
-        patch("app.sqlite3").start()
+        patch("database.sqlite3").start()
         patch("app.Database._calc_time_stamp").start()
         db = Database()
         # when
@@ -119,7 +119,7 @@ class TestDb(TestCase):
 
     def test_calc_time_stamp(self) -> None:
         # given
-        now = patch("app.datetime", wraps=datetime).start()
+        now = patch("database.datetime", wraps=datetime).start()
         now.now.return_value = datetime.strptime(
             "2024-01-01 17:00:00", "%Y-%m-%d %H:%M:%S"
         )
@@ -132,7 +132,7 @@ class TestDb(TestCase):
     def test_output_with_timestamp(self) -> None:
         # given
         std_out = patch("builtins.print").start()
-        today = patch("app.date", wraps=datetime).start()
+        today = patch("database.date", wraps=datetime).start()
         today.today.return_value = date(2024, 1, 1)
         now = patch("app.datetime", wraps=datetime).start()
         now.now.return_value = datetime.strptime(
