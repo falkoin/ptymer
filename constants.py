@@ -13,3 +13,6 @@ class Event:
 class Format:
     TIME = "%H:%M:%S"
     DATETIIME = "%Y-%m-%d %H:%M:%S"
+
+class File:
+    NAME = "ptymer.db"
