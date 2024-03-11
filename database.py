@@ -41,9 +41,10 @@ class Database:
 
     def _check_valid_timestamp(self, time_stamp: datetime, event: str) -> bool:
         times = self.get_times_by(event=event)
-        latest_time = datetime.strptime(times[0][0], "%Y-%m-%d %H:%M:%S")
-        if latest_time > time_stamp:
-            return False
+        if times:
+            latest_time = datetime.strptime(times[0][0], "%Y-%m-%d %H:%M:%S")
+            if latest_time > time_stamp:
+                return False
         return True
 
     @staticmethod
