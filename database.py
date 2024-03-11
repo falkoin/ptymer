@@ -3,9 +3,9 @@ from sqlite3 import Connection
 from typing import Any
 from datetime import date, datetime, timedelta
 from os import path
+from constants import Format
 
 FILE_NAME = "ptymer.db"
-FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 class Database:
@@ -35,14 +35,14 @@ class Database:
         if not self._check_valid_timestamp(time_stamp, event):
             raise Exception("Timestamp collision")
         cur.execute(
-            f"INSERT INTO timestamp VALUES ('{self.date_today}', '{event}', '{time_stamp.strftime(FORMAT)}')"
+            f"INSERT INTO timestamp VALUES ('{self.date_today}', '{event}', '{time_stamp.strftime(Format.DATETIIME)}')"
         )
         self.con.commit()
 
     def _check_valid_timestamp(self, time_stamp: datetime, event: str) -> bool:
         times = self.get_times_by(event=event)
         if times:
-            latest_time = datetime.strptime(times[0][0], "%Y-%m-%d %H:%M:%S")
+            latest_time = datetime.strptime(times[0][0], Format.DATETIIME)
             if latest_time > time_stamp:
                 return False
         return True
