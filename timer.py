@@ -4,7 +4,7 @@ from datetime import timedelta, datetime
 
 
 class Timer:
-    
+
     def __init__(self, db: Database):
         self.db = db
 
@@ -44,10 +44,8 @@ class Timer:
         times = self.db.get_times_by(event=event)
         if times:
             latest_time = datetime.strptime(times[0][0], Format.DATETIIME)
-            if latest_time > time_stamp:
-                return False
+            return latest_time < time_stamp
         return True
-
 
     @staticmethod
     def _calc_time_stamp(delta: int) -> datetime:
