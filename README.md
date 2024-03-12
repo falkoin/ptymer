@@ -1,3 +1,5 @@
+![example event parameter](https://github.com/falkoin/ptymer/actions/workflows/main.yml/badge.svg?event=push)
+
 # ptymer
 A CLI work timer written in Python.
 
