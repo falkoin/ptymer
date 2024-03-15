@@ -10,6 +10,10 @@ class TestTimer(TestCase):
     def setUp(self) -> None:
         self.filename = ":memory:"
         self.db = MagicMock(spec=Database)
+        now = patch("timer.datetime", wraps=datetime).start()
+        now.now.return_value = datetime.strptime(
+            "2024-01-01 17:00:00", "%Y-%m-%d %H:%M:%S"
+        )
 
     def test_create_timestamp(self) -> None:
         # given
@@ -47,10 +51,6 @@ class TestTimer(TestCase):
 
     def test_calc_time_stamp(self) -> None:
         # given
-        now = patch("timer.datetime", wraps=datetime).start()
-        now.now.return_value = datetime.strptime(
-            "2024-01-01 17:00:00", "%Y-%m-%d %H:%M:%S"
-        )
         db = Database(self.filename)
         timer = Timer(db)
         # when
