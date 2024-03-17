@@ -9,6 +9,9 @@ class TestApp(TestCase):
     def setUp(self) -> None:
         self.db_file = patch("app.path.isfile").start()
 
+    def tearDown(self) -> None:
+        patch.stopall()
+
     def test_db_file_existing(self) -> None:
         # given
         self.db_file.return_value = True

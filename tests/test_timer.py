@@ -15,6 +15,9 @@ class TestTimer(TestCase):
             "2024-01-01 17:00:00", "%Y-%m-%d %H:%M:%S"
         )
 
+    def tearDown(self) -> None:
+        patch.stopall()
+
     def test_create_timestamp(self) -> None:
         # given
         patch("app.Timer._check_valid_timestamp", return_value=True).start()
