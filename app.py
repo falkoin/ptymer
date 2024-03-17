@@ -28,6 +28,7 @@ def start(delta: Annotated[int, typer.Option(help=InfoText.HELP_DELTA)] = 0):
             timer.create_timestamp(Event.START, delta)
         except Exception:
             print(InfoText.WARN_COLLISON)
+            return
         output_with_timestamp("Started working", delta)
     else:
         print("Session already running.")
