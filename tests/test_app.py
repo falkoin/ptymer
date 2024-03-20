@@ -1,13 +1,16 @@
 from unittest import TestCase
 from unittest.mock import patch
 from app import db_file_existing, output_with_timestamp
+from app import app
 from datetime import datetime, date
+from typer.testing import CliRunner
 
 
 class TestApp(TestCase):
 
     def setUp(self) -> None:
         self.db_file = patch("app.path.isfile").start()
+        self.runner = CliRunner()
 
     def tearDown(self) -> None:
         patch.stopall()
@@ -44,3 +47,42 @@ class TestApp(TestCase):
         output_with_timestamp(text)
         # then
         std_out.assert_called_once_with(f"[17:00:00]: {text}")
+
+    def test_app_with_start(self) -> None:
+        # given
+        patch("app.Timer.check_state_allowed", return_value=True).start()
+        patch("app.Timer.create_timestamp").start()
+        # when
+        result = self.runner.invoke(app, ["start"])
+        # then
+        self.assertEqual(0, result.exit_code)
+        self.assertTrue("Started working" in result.stdout)
+
+    def test_app_with_start_already_started(self) -> None:
+        # given
+        patch("app.Timer.check_state_allowed", return_value=False).start()
+        # when
+        result = self.runner.invoke(app, ["start"])
+        # then
+        self.assertEqual(0, result.exit_code)
+        self.assertTrue("Session already running." in result.stdout)
+
+    def test_app_show(self) -> None:
+        # given
+        patch("app.Timer.calc_worktime", return_value=1337).start()
+        patch("app.Database.get_last_event", return_value="start").start()
+        # when
+        self.runner.invoke(app, ["start"])
+        result = self.runner.invoke(app, ["show"])
+        # then
+        self.assertEqual(0, result.exit_code)
+        self.assertTrue("Worked for 1337 hours" in result.stdout)
+
+    def test_app_show_without_start(self) -> None:
+        # given
+        patch("app.Database.get_last_event", return_value=[]).start()
+        # when
+        result = self.runner.invoke(app, ["show"])
+        # then
+        self.assertEqual(0, result.exit_code)
+        self.assertTrue("No session existing for today, yet" in result.stdout)

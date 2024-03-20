@@ -26,7 +26,13 @@ class TestTimer(TestCase):
         # when
         timer.create_timestamp("start")
         # then
-        db.assert_has_calls([call.write_timestamp(event="start", time_stamp=datetime(2024, 1, 1, 17, 0))])
+        db.assert_has_calls(
+            [
+                call.write_timestamp(
+                    event="start", time_stamp=datetime(2024, 1, 1, 17, 0)
+                )
+            ]
+        )
 
     def test_create_timestamp_collision(self) -> None:
         # given

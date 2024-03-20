@@ -56,9 +56,7 @@ class TestDatabase(TestCase):
         con = patch("database.sqlite3").start()
         today = patch("database.date", wraps=date).start()
         today.today.return_value = "2024-01-01"
-        time_stamp = datetime.strptime(
-            "2024-01-01 17:00:00", "%Y-%m-%d %H:%M:%S"
-        )
+        time_stamp = datetime.strptime("2024-01-01 17:00:00", "%Y-%m-%d %H:%M:%S")
         db = Database(self.filename)
         expected_call = "INSERT INTO timestamp VALUES ('2024-01-01', 'start', '2024-01-01 17:00:00')"
         # when

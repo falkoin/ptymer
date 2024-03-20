@@ -61,6 +61,9 @@ def show():
         print("No data to show")
         return
     db = Database(File.NAME)
+    if not db.get_last_event():
+        print("No session existing for today, yet")
+        return
     timer = Timer(db)
     duration = timer.calc_worktime()
     output_with_timestamp(f"Worked for {duration} hours")
