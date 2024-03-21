@@ -30,7 +30,7 @@ class Database:
     def write_timestamp(self, event: str, time_stamp: datetime):
         cur = self.con.cursor()
         cur.execute(
-            f"INSERT INTO timestamp VALUES ('{self.date_today}', '{event}', '{time_stamp.strftime(Format.DATETIIME)}')"
+            f"INSERT INTO timestamp VALUES ('{self.date_today}', '{event}', '{time_stamp.strftime(Format.DATETIME)}')"
         )
         self.con.commit()
 

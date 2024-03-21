@@ -20,15 +20,15 @@ class Timer:
 
         if times_start:
             if len(times_start) > len(times_stop):
-                times_stop.append((f"{datetime.now().strftime(Format.DATETIIME)}",))
+                times_stop.append((f"{datetime.now().strftime(Format.DATETIME)}",))
             return self.calc_duration(times_stop, times_start)
         else:
             raise Exception(InfoText.WARN_DURATION)
 
     def calc_duration(self, time_1: list[tuple], time_2: list[tuple]) -> timedelta:
         diff_times = [
-            datetime.strptime(x[0], Format.DATETIIME)
-            - datetime.strptime(y[0], Format.DATETIIME)
+            datetime.strptime(x[0], Format.DATETIME)
+            - datetime.strptime(y[0], Format.DATETIME)
             for x, y in zip(time_1, time_2)
         ]
 
@@ -43,7 +43,7 @@ class Timer:
     def _check_valid_timestamp(self, time_stamp: datetime, event: str) -> bool:
         times = self.db.get_times_by(event=event)
         if times:
-            latest_time = datetime.strptime(times[0][0], Format.DATETIIME)
+            latest_time = datetime.strptime(times[0][0], Format.DATETIME)
             return latest_time < time_stamp
         return True
 

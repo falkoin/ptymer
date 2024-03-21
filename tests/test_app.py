@@ -82,6 +82,7 @@ class TestApp(TestCase):
         # given
         patch("app.Timer.calc_worktime", return_value=1337).start()
         patch("app.Database.get_last_event", return_value="start").start()
+        patch("app.Timer.create_timestamp", side_effect=Exception()).start()
         # when
         self.runner.invoke(app, ["start"])
         result = self.runner.invoke(app, ["show"])

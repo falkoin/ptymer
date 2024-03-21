@@ -12,7 +12,7 @@ class Event:
 
 class Format:
     TIME = "%H:%M:%S"
-    DATETIIME = "%Y-%m-%d %H:%M:%S"
+    DATETIME = "%Y-%m-%d %H:%M:%S"
 
 
 class File:

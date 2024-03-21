@@ -1,4 +1,3 @@
-from sqlite3 import Connection, Cursor
 from unittest import TestCase
 from unittest.mock import patch, call
 from database import Database
@@ -79,7 +78,9 @@ class TestDatabase(TestCase):
         patch("database.path.isfile", return_value=True).start()
         con = patch("database.sqlite3").start()
         db = Database(self.filename)
-        expected_call = "SELECT event FROM timestamp WHERE date='2024-01-01' ORDER BY time DESC"
+        expected_call = (
+            "SELECT event FROM timestamp WHERE date='2024-01-01' ORDER BY time DESC"
+        )
         # when
         db.get_last_event()
         # then
@@ -88,7 +89,6 @@ class TestDatabase(TestCase):
                 call.connect(":memory:"),
                 call.connect().cursor(),
                 call.connect().cursor().execute(expected_call),
-                call.connect().cursor().execute().fetchone()
+                call.connect().cursor().execute().fetchone(),
             ]
         )
-
