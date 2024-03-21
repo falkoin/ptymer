@@ -21,12 +21,11 @@ class TestTimer(TestCase):
     def test_create_timestamp(self) -> None:
         # given
         patch("app.Timer._check_valid_timestamp", return_value=True).start()
-        db = MagicMock(spec=Database)
-        timer = Timer(db)
+        timer = Timer(self.db)
         # when
         timer.create_timestamp("start")
         # then
-        db.assert_has_calls(
+        self.db.assert_has_calls(
             [
                 call.write_timestamp(
                     event="start", time_stamp=datetime(2024, 1, 1, 17, 0)
@@ -38,8 +37,7 @@ class TestTimer(TestCase):
         # given
         patch("app.Timer._check_valid_timestamp", return_value=False).start()
         patch("app.Timer._calc_time_stamp").start()
-        db = MagicMock(spec=Database)
-        timer = Timer(db)
+        timer = Timer(self.db)
         # when
         with self.assertRaises(Exception) as e:
             timer.create_timestamp("start")
@@ -48,10 +46,9 @@ class TestTimer(TestCase):
 
     def test_check_state_allowed(self) -> None:
         # given
-        db = MagicMock(spec=Database)
-        db.get_last_event.side_effect = [("start",), ("start",)]
-        timer = Timer(db)
-        for event, expected in zip(("start", "stop"), (False, True)):
+        self.db.get_last_event.side_effect = [("start",), ("start",), None]
+        timer = Timer(self.db)
+        for event, expected in zip(("start", "stop", "start"), (False, True, True)):
             with self.subTest(event):
                 # when
                 result = timer.check_state_allowed(event)
@@ -60,8 +57,7 @@ class TestTimer(TestCase):
 
     def test_calc_time_stamp(self) -> None:
         # given
-        db = Database(self.filename)
-        timer = Timer(db)
+        timer = Timer(self.db)
         # when
         time_stamp = timer._calc_time_stamp(delta=10)
         # then
@@ -72,8 +68,7 @@ class TestTimer(TestCase):
         date_ = "2024-01-01"
         times_1 = [(f"{date_} 12:00:00",), (f"{date_} 17:00:00",)]
         times_2 = [(f"{date_} 08:00:00",), (f"{date_} 13:00:00",)]
-        db = MagicMock(spec=Database)
-        timer = Timer(db)
+        timer = Timer(self.db)
         # when
         duration = timer.calc_duration(times_1, times_2)
         # then
@@ -84,8 +79,7 @@ class TestTimer(TestCase):
         date_ = "2024-01-01"
         times_1 = [(f"{date_} 12:00:00",)]
         times_2 = [(f"{date_} 08:00:00",), (f"{date_} 13:00:00",)]
-        db = MagicMock(spec=Database)
-        timer = Timer(db)
+        timer = Timer(self.db)
         # when
         duration = timer.calc_duration(times_1, times_2)
         # then
@@ -101,11 +95,20 @@ class TestTimer(TestCase):
         # then
         self.assertTrue(result)
 
+    def test_check_timestamp_without_entries(self) -> None:
+        # given
+        timer = Timer(self.db)
+        self.db.get_times_by.return_value = None
+        time_stamp = datetime.strptime("2024-01-01 17:10:00", "%Y-%m-%d %H:%M:%S")
+        # when
+        result = timer._check_valid_timestamp(time_stamp, "start")
+        # then
+        self.assertTrue(result)
+
     def test_check_invalid_timestamp(self) -> None:
         # given
-        db = MagicMock(spec=Database)
-        timer = Timer(db)
-        db.get_times_by.return_value = [("2024-01-01 17:00:00",)]
+        timer = Timer(self.db)
+        self.db.get_times_by.return_value = [("2024-01-01 17:00:00",)]
         time_stamp = datetime.strptime("2024-01-01 16:09:00", "%Y-%m-%d %H:%M:%S")
         # when
         result = timer._check_valid_timestamp(time_stamp, "start")

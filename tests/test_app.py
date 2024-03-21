@@ -9,28 +9,28 @@ from typer.testing import CliRunner
 class TestApp(TestCase):
 
     def setUp(self) -> None:
-        self.db_file = patch("app.path.isfile").start()
         self.runner = CliRunner()
+        self.db_file_existing = patch("app.db_file_existing").start()
 
     def tearDown(self) -> None:
         patch.stopall()
 
     def test_db_file_existing(self) -> None:
         # given
-        self.db_file.return_value = True
+        db_file = patch("app.path.isfile", return_value=True).start()
         # when
         result = db_file_existing()
         # then
-        self.db_file.assert_called_with("./ptymer.db")
+        db_file.assert_called_with("./ptymer.db")
         self.assertEqual(True, result)
 
     def test_db_file_not_existing(self) -> None:
         # given
-        self.db_file.return_value = False
+        db_file = patch("app.path.isfile", return_value=False).start()
         # when
         result = db_file_existing()
         # then
-        self.db_file.assert_called_with("./ptymer.db")
+        db_file.assert_called_with("./ptymer.db")
         self.assertEqual(False, result)
 
     def test_output_with_timestamp(self) -> None:
@@ -57,6 +57,17 @@ class TestApp(TestCase):
         # then
         self.assertEqual(0, result.exit_code)
         self.assertTrue("Started working" in result.stdout)
+
+    def test_app_with_start_has_collision(self) -> None:
+        # given
+        patch("app.Timer.check_state_allowed", return_value=True).start()
+        patch("app.Timer.create_timestamp", side_effect=Exception()).start()
+        # when
+        with self.assertRaises(Exception):
+            result = self.runner.invoke(app, ["start"])
+            # then
+            self.assertEqual(0, result.exit_code)
+            self.assertTrue("Timestamp collision with exisiting one" in result.stdout)
 
     def test_app_with_start_already_started(self) -> None:
         # given
@@ -86,3 +97,12 @@ class TestApp(TestCase):
         # then
         self.assertEqual(0, result.exit_code)
         self.assertTrue("No session existing for today, yet" in result.stdout)
+
+    def test_app_show_without_database(self) -> None:
+        # given
+        self.db_file_existing.return_value = False
+        # when
+        result = self.runner.invoke(app, ["show"])
+        # then
+        self.assertEqual(0, result.exit_code)
+        self.assertTrue("No data to show" in result.stdout)
