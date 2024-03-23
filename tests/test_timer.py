@@ -127,7 +127,7 @@ class TestTimer(TestCase):
 
     def test_calc_work_time(self) -> None:
         # given
-        patch("timer.Timer.calc_duration", return_value = {}).start()
+        patch("timer.Timer.calc_duration", return_value={}).start()
         self.db.get_times_by.side_effect = (("t1",), ("t2",))
         timer = Timer(self.db)
         # when
@@ -137,7 +137,7 @@ class TestTimer(TestCase):
 
     def test_calc_work_time_more_start_times(self) -> None:
         # given
-        test = patch("timer.Timer.calc_duration", return_value = {}).start()
+        test = patch("timer.Timer.calc_duration", return_value={}).start()
         self.db.get_times_by.side_effect = ([("t1",), ("t2",)], [("t3",)])
         timer = Timer(self.db)
         # when

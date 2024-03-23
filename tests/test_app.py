@@ -107,3 +107,45 @@ class TestApp(TestCase):
         # then
         self.assertEqual(0, result.exit_code)
         self.assertTrue("No data to show" in result.stdout)
+
+    def test_app_stop_no_db_file(self) -> None:
+        # given
+        self.db_file_existing.return_value = False
+        # when
+        result = self.runner.invoke(app, ["stop"])
+        # then
+        self.assertTrue("No session started, yet", result.stdout)
+
+    def test_app_stop_already_stopped(self) -> None:
+        # given
+        patch("app.Timer.check_state_allowed", return_value=False).start()
+        # when
+        result = self.runner.invoke(app, ["stop"])
+        # then
+        self.assertTrue("Session already stopped.", result.stdout)
+
+    def test_app_stop_with_collision(self) -> None:
+        # given
+        patch("app.Timer.check_state_allowed", return_value=True).start()
+        patch("app.Timer.create_timestamp", side_effect=Exception()).start()
+        # when
+        with self.assertRaises(Exception):
+            result = self.runner.invoke(app, ["start"])
+            # then
+            self.assertEqual(0, result.exit_code)
+            self.assertTrue("Timestamp collision with exisiting one" in result.stdout)
+        # when
+        result = self.runner.invoke(app, ["stop"])
+        # then
+        self.assertTrue("Session already stopped.", result.stdout)
+
+    def test_app_with_stop(self) -> None:
+        # given
+        patch("app.Timer.check_state_allowed", return_value=True).start()
+        patch("app.Timer.create_timestamp").start()
+        patch("app.Timer.calc_worktime", return_value="01:33:07").start()
+        # when
+        result = self.runner.invoke(app, ["stop"])
+        # then
+        self.assertEqual(0, result.exit_code)
+        self.assertTrue("Worked for 01:33:07 hours" in result.stdout)

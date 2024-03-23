@@ -12,7 +12,7 @@ A CLI work timer written in Python.
 
 ## TODO
 - [x] Migrate to SQLite
-- [ ] Gain 100 % test-coverage
+- [x] Gain 100 % test-coverage
 - [ ] Implement as "real" terminal commands
 - [ ] Add more information to output
 - [ ] Make output more graphical

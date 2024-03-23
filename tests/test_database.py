@@ -102,9 +102,7 @@ class TestDatabase(TestCase):
         db = Database(self.filename)
         for event in ("start", "stop"):
             with self.subTest(event):
-                expected_call = (
-                    f"SELECT time FROM timestamp WHERE date='2024-01-01' AND event='{event}' ORDER BY time ASC"
-                )
+                expected_call = f"SELECT time FROM timestamp WHERE date='2024-01-01' AND event='{event}' ORDER BY time ASC"
                 con.reset_mock()
                 # when
                 db.get_times_by(event=event)
