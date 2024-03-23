@@ -114,3 +114,34 @@ class TestTimer(TestCase):
         result = timer._check_valid_timestamp(time_stamp, "start")
         # then
         self.assertFalse(result)
+
+    def test_calc_work_time_no_times(self) -> None:
+        # given
+        self.db.get_times_by.side_effect = ([], [])
+        timer = Timer(self.db)
+        # when
+        with self.assertRaises(Exception) as e:
+            timer.calc_worktime()
+        # then
+        self.assertEqual("Couldn't calculate duration for today", str(e.exception))
+
+    def test_calc_work_time(self) -> None:
+        # given
+        patch("timer.Timer.calc_duration", return_value = {}).start()
+        self.db.get_times_by.side_effect = (("t1",), ("t2",))
+        timer = Timer(self.db)
+        # when
+        result = timer.calc_worktime()
+        # then
+        self.assertEqual({}, result)
+
+    def test_calc_work_time_more_start_times(self) -> None:
+        # given
+        test = patch("timer.Timer.calc_duration", return_value = {}).start()
+        self.db.get_times_by.side_effect = ([("t1",), ("t2",)], [("t3",)])
+        timer = Timer(self.db)
+        # when
+        result = timer.calc_worktime()
+        # then
+        self.assertEqual({}, result)
+        test.assert_called_with([("t3",), ("2024-01-01 17:00:00",)], [("t1",), ("t2",)])

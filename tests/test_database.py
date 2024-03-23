@@ -59,12 +59,12 @@ class TestDatabase(TestCase):
         time_stamp = datetime.strptime("2024-01-01 17:00:00", "%Y-%m-%d %H:%M:%S")
         db = Database(self.filename)
         expected_call = "INSERT INTO timestamp VALUES ('2024-01-01', 'start', '2024-01-01 17:00:00')"
+        con.reset_mock()
         # when
         db.write_timestamp("start", time_stamp)
         # then
         con.assert_has_calls(
             [
-                call.connect(":memory:"),
                 call.connect().cursor(),
                 call.connect().cursor().execute(expected_call),
                 call.connect().commit(),
@@ -81,14 +81,38 @@ class TestDatabase(TestCase):
         expected_call = (
             "SELECT event FROM timestamp WHERE date='2024-01-01' ORDER BY time DESC"
         )
+        con.reset_mock()
         # when
         db.get_last_event()
         # then
         con.assert_has_calls(
             [
-                call.connect(":memory:"),
                 call.connect().cursor(),
                 call.connect().cursor().execute(expected_call),
                 call.connect().cursor().execute().fetchone(),
             ]
         )
+
+    def test_get_times_by(self) -> None:
+        # given
+        today = patch("database.date", wraps=date).start()
+        today.today.return_value = "2024-01-01"
+        patch("database.path.isfile", return_value=True).start()
+        con = patch("database.sqlite3").start()
+        db = Database(self.filename)
+        for event in ("start", "stop"):
+            with self.subTest(event):
+                expected_call = (
+                    f"SELECT time FROM timestamp WHERE date='2024-01-01' AND event='{event}' ORDER BY time ASC"
+                )
+                con.reset_mock()
+                # when
+                db.get_times_by(event=event)
+                # then
+                con.assert_has_calls(
+                    [
+                        call.connect().cursor(),
+                        call.connect().cursor().execute(expected_call),
+                        call.connect().cursor().execute().fetchall(),
+                    ]
+                )
