@@ -4,7 +4,7 @@
 A simple CLI work timer written in Python.
 
 This started as a pet project to get familiar with developing cli applications. My intentions was to create something
-that I would use myself and not just a random prototype. As it turned, I use this work timer on a daily basis (on work
+that I would use myself and not just a random prototype. As it turned out, I use this work timer on a daily basis (on work
 days). It is very simple. It doesn't support projects, since I am only working in one project. So, it is merely to track
 my daily work time. It also doesn't alert you, when your work time is over or anything similar. It is just a tool to
 create timestamps when you started or stopped/paused and tracks your overall work time.
