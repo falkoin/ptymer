@@ -23,9 +23,7 @@ class TestDatabase(TestCase):
             [
                 call.connect(self.filename),
                 call.connect().cursor(),
-                call.connect()
-                .cursor()
-                .execute("CREATE TABLE timestamp(date, event, time)"),
+                call.connect().cursor().execute("CREATE TABLE timestamp(date, event, time)"),
             ]
         )
 
@@ -78,9 +76,7 @@ class TestDatabase(TestCase):
         patch("database.path.isfile", return_value=True).start()
         con = patch("database.sqlite3").start()
         db = Database(self.filename)
-        expected_call = (
-            "SELECT event FROM timestamp WHERE date='2024-01-01' ORDER BY time DESC"
-        )
+        expected_call = "SELECT event FROM timestamp WHERE date='2024-01-01' ORDER BY time DESC"
         con.reset_mock()
         # when
         db.get_last_event()
@@ -102,7 +98,9 @@ class TestDatabase(TestCase):
         db = Database(self.filename)
         for event in ("start", "stop"):
             with self.subTest(event):
-                expected_call = f"SELECT time FROM timestamp WHERE date='2024-01-01' AND event='{event}' ORDER BY time ASC"
+                expected_call = (
+                    f"SELECT time FROM timestamp WHERE date='2024-01-01' AND event='{event}' ORDER BY time ASC"
+                )
                 con.reset_mock()
                 # when
                 db.get_times_by(event=event)

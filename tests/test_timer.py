@@ -145,3 +145,15 @@ class TestTimer(TestCase):
         # then
         self.assertEqual({}, result)
         test.assert_called_with([("t3",), ("2024-01-01 17:00:00",)], [("t1",), ("t2",)])
+
+    def test_calc_week(self) -> None:
+        # gicen
+        self.db.date_today = "2024-01-02"
+        patch("timer.Timer.calc_worktime", side_effect=["1", "2", "3"]).start()
+        timer = Timer(self.db)
+        expected_date_1 = datetime.strptime(self.db.date_today, "%Y-%m-%d")
+        expected_date_2 = datetime.strptime("2024-01-01", "%Y-%m-%d")
+        # when
+        result = timer.calc_week()
+        # then
+        self.assertEqual([(expected_date_1, "1"), (expected_date_2, "2")], result)

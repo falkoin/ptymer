@@ -1,3 +1,5 @@
+from contextlib import suppress
+from typing import List
 from database import Database
 from constants import Event, Format, InfoText
 from datetime import timedelta, datetime
@@ -50,3 +52,19 @@ class Timer:
     @staticmethod
     def _calc_time_stamp(delta: int) -> datetime:
         return datetime.now() - timedelta(minutes=delta)
+
+    def calc_week(self) -> List:
+        week_durations = []
+        current_week = datetime.strptime(self.db.date_today, Format.DATE).strftime("%V")
+        for date_delta in range(0, 7):
+            new_date = datetime.strptime(self.db.date_today, Format.DATE) - timedelta(
+                days=date_delta
+            )
+            this_week = new_date.strftime("%V")
+            self.db.date_today = new_date.strftime(Format.DATE)
+            if current_week == this_week:
+                with suppress(Exception):
+                    week_durations.append((new_date, self.calc_worktime()))
+            else:
+                break
+        return week_durations

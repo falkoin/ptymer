@@ -16,6 +16,7 @@ list, when I have the need for them.
     app.py start # starts the session
     app.py stop # stops or pauses the session
     app.py show # shows your current progress 
+    app.py week # show worktime per day for the current week
     app.py start/stop --delta INTEGER # sets timestamp x minutes earlier, e.g after you forgot to start or stop.
     app.py --help
 
@@ -27,8 +28,8 @@ list, when I have the need for them.
 ## TODO
 - [x] Migrate to SQLite
 - [x] Gain 100 % test-coverage
+- [x] Show statistics
 - [ ] Implement as "real" terminal commands
 - [ ] Add more information to output
 - [ ] Make output more graphical
 - [ ] Add editing feature to entries
-- [ ] Show statistics

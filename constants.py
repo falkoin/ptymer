@@ -13,6 +13,7 @@ class Event:
 class Format:
     TIME = "%H:%M:%S"
     DATETIME = "%Y-%m-%d %H:%M:%S"
+    DATE = "%Y-%m-%d"
 
 
 class File:

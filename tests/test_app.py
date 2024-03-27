@@ -149,3 +149,31 @@ class TestApp(TestCase):
         # then
         self.assertEqual(0, result.exit_code)
         self.assertTrue("Worked for 01:33:07 hours" in result.stdout)
+
+    def test_app_week_without_database(self) -> None:
+        # given
+        self.db_file_existing.return_value = False
+        # when
+        result = self.runner.invoke(app, ["week"])
+        # then
+        self.assertEqual(0, result.exit_code)
+        self.assertTrue("No data to show" in result.stdout)
+
+    def test_app_week_without_data(self) -> None:
+        # given
+        patch("app.Timer.calc_week", return_value=[]).start()
+        # when
+        result = self.runner.invoke(app, ["week"])
+        # then
+        self.assertEqual(0, result.exit_code)
+        self.assertTrue("No data to show" in result.stdout)
+
+    def test_app_week(self) -> None:
+        # given
+        datetime_ = datetime.strptime("2024-01-01 17:00:00", "%Y-%m-%d %H:%M:%S")
+        patch("app.Timer.calc_week", return_value=[(datetime_, "something")]).start()
+        # when
+        result = self.runner.invoke(app, ["week"])
+        # then
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual("Monday: something hours", str(result.stdout).rstrip())

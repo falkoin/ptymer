@@ -1,3 +1,4 @@
+from typing import List, Tuple
 import typer
 from datetime import datetime, timedelta
 from os import path
@@ -14,6 +15,11 @@ def db_file_existing() -> bool:
 def output_with_timestamp(text: str, delta: int = 0) -> None:
     time_stamp = (datetime.now() - timedelta(minutes=delta)).strftime(Format.TIME)
     print(f"[{time_stamp}]: " + text)
+
+
+def output_week(timestamps: List[Tuple]) -> None:
+    for date_, timestamp in timestamps[::-1]:
+        print(f"{date_.strftime('%A')}: {timestamp} hours")
 
 
 app = typer.Typer()
@@ -67,6 +73,21 @@ def show():
     timer = Timer(db)
     duration = timer.calc_worktime()
     output_with_timestamp(f"Worked for {duration} hours")
+    timer.db.close()
+
+
+@app.command()
+def week():
+    if not db_file_existing():
+        print("No data to show")
+        return
+    db = Database(File.NAME)
+    timer = Timer(db)
+    week_durations = timer.calc_week()
+    if week_durations:
+        output_week(week_durations)
+    else:
+        print("No data to show")
     timer.db.close()
 
 
