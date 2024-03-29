@@ -55,14 +55,13 @@ class Timer:
 
     def calc_week(self) -> List:
         week_durations = []
-        current_week = datetime.strptime(self.db.date_today, Format.DATE).strftime("%V")
+        current_week = datetime.strptime(self.db.date_today, Format.DATE)
         for date_delta in range(0, 7):
-            new_date = datetime.strptime(self.db.date_today, Format.DATE) - timedelta(
+            new_date = current_week - timedelta(
                 days=date_delta
             )
-            this_week = new_date.strftime("%V")
             self.db.date_today = new_date.strftime(Format.DATE)
-            if current_week == this_week:
+            if current_week.strftime("%V") == new_date.strftime("%V"):
                 with suppress(Exception):
                     week_durations.append((new_date, self.calc_worktime()))
             else:

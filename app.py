@@ -6,6 +6,8 @@ from typing_extensions import Annotated
 from database import Database
 from constants import InfoText, Event, Format, File
 from timer import Timer
+from rich.table import Table
+from rich.console import Console
 
 
 def db_file_existing() -> bool:
@@ -18,11 +20,14 @@ def output_with_timestamp(text: str, delta: int = 0) -> None:
 
 
 def output_week(timestamps: List[Tuple]) -> None:
+    table = Table("Day","Worktime")
     for date_, timestamp in timestamps[::-1]:
-        print(f"{date_.strftime('%A')}: {timestamp} hours")
+        table.add_row(date_.strftime('%A'), str(timestamp))
+    console.print(table)
 
 
 app = typer.Typer()
+console = Console()
 
 
 @app.command()

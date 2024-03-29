@@ -1,6 +1,8 @@
 from unittest import TestCase
-from unittest.mock import patch
-from app import db_file_existing, output_with_timestamp
+from unittest.mock import MagicMock, call, patch
+
+from rich.table import Table
+from app import db_file_existing, output_week, output_with_timestamp
 from app import app
 from datetime import datetime, date
 from typer.testing import CliRunner
@@ -172,8 +174,25 @@ class TestApp(TestCase):
         # given
         datetime_ = datetime.strptime("2024-01-01 17:00:00", "%Y-%m-%d %H:%M:%S")
         patch("app.Timer.calc_week", return_value=[(datetime_, "something")]).start()
+        output_week = patch("app.output_week").start()
         # when
         result = self.runner.invoke(app, ["week"])
         # then
         self.assertEqual(0, result.exit_code)
-        self.assertEqual("Monday: something hours", str(result.stdout).rstrip())
+        output_week.assert_called_with([(datetime_, "something")])
+
+    def test_output_week(self) -> None:
+        # given
+        with patch("app.Table") as mock:
+            console = patch("app.console.print").start()
+            data = [
+                    (datetime.strptime("2024-01-03", "%Y-%m-%d"), 1),
+                    (datetime.strptime("2024-01-02", "%Y-%m-%d"), 2),
+                    (datetime.strptime("2024-01-01", "%Y-%m-%d"), 3),
+                    ]
+            expected_calls = [call("Day", "Worktime"), call().add_row("Monday", "3"), call().add_row("Tuesday", "2"), call().add_row("Wednesday", "1")]
+            # when
+            output_week(data)
+            # then
+            console.assert_called_once()
+            mock.assert_has_calls(expected_calls)
