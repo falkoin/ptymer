@@ -3,6 +3,7 @@ class InfoText:
 
     WARN_COLLISON = "Timestamp collision with existing one"
     WARN_DURATION = "Couldn't calculate duration for today"
+    WARN_SYMBOL = "[red]⏱[/red]"
 
 
 class Event:

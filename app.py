@@ -8,6 +8,7 @@ from constants import InfoText, Event, Format, File
 from timer import Timer
 from rich.table import Table
 from rich.console import Console
+from rich import print
 
 
 def db_file_existing() -> bool:
@@ -42,14 +43,14 @@ def start(delta: Annotated[int, typer.Option(help=InfoText.HELP_DELTA)] = 0):
             return
         output_with_timestamp("Started working", delta)
     else:
-        print("Session already running.")
+        print(f"{InfoText.WARN_SYMBOL} Session already running.")
     timer.db.close()
 
 
 @app.command()
 def stop(delta: Annotated[int, typer.Option(help=InfoText.HELP_DELTA)] = 0):
     if not db_file_existing():
-        print("No session started, yet")
+        print(f"{InfoText.WARN_SYMBOL} No session started, yet")
         return
     db = Database(File.NAME)
     timer = Timer(db)
@@ -62,18 +63,18 @@ def stop(delta: Annotated[int, typer.Option(help=InfoText.HELP_DELTA)] = 0):
         duration = timer.calc_worktime()
         output_with_timestamp(f"Worked for {duration} hours", delta)
     else:
-        print("Session already stopped.")
+        print(f"{InfoText.WARN_SYMBOL} Session already stopped.")
     timer.db.close()
 
 
 @app.command()
 def show():
     if not db_file_existing():
-        print("No data to show")
+        print(f"{InfoText.WARN_SYMBOL} No data to show")
         return
     db = Database(File.NAME)
     if not db.get_last_event():
-        print("No session existing for today, yet")
+        print(f"{InfoText.WARN_SYMBOL} No session existing for today, yet")
         return
     timer = Timer(db)
     duration = timer.calc_worktime()
@@ -84,7 +85,7 @@ def show():
 @app.command()
 def week():
     if not db_file_existing():
-        print("No data to show")
+        print(f"{InfoText.WARN_SYMBOL} No data to show")
         return
     db = Database(File.NAME)
     timer = Timer(db)
@@ -92,7 +93,7 @@ def week():
     if week_durations:
         output_week(week_durations)
     else:
-        print("No data to show")
+        print(f"{InfoText.WARN_SYMBOL} No data to show")
     timer.db.close()
 
 

@@ -37,7 +37,7 @@ class TestApp(TestCase):
 
     def test_output_with_timestamp(self) -> None:
         # given
-        std_out = patch("builtins.print").start()
+        std_out = patch("app.print").start()
         today = patch("database.date", wraps=datetime).start()
         today.today.return_value = date(2024, 1, 1)
         now = patch("app.datetime", wraps=datetime).start()

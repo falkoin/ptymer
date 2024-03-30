@@ -29,7 +29,9 @@ list, when I have the need for them.
 - [x] Migrate to SQLite
 - [x] Gain 100 % test-coverage
 - [x] Show statistics
+- [x] Make output more graphical
 - [ ] Implement as "real" terminal commands
 - [ ] Add more information to output
-- [ ] Make output more graphical
 - [ ] Add editing feature to entries
+- [ ] Create specific exceptions
+- [ ] Switch to better datetime handling
