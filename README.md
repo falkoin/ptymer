@@ -30,7 +30,7 @@ list, when I have the need for them.
 - [x] Gain 100 % test-coverage
 - [x] Show statistics
 - [x] Make output more graphical
-- [ ] Implement as "real" terminal commands
+- [x] Implement as "real" terminal commands
 - [ ] Add more information to output
 - [ ] Add editing feature to entries
 - [ ] Create specific exceptions
