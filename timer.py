@@ -40,6 +40,7 @@ class Timer:
         time_stamp = self._calc_time_stamp(delta)
         if not self._check_valid_timestamp(time_stamp, event):
             raise Exception("Timestamp collision")
+        time_stamp = time_stamp.strftime(Format.DATETIME)
         self.db.write_timestamp(event=event, time_stamp=time_stamp)
 
     def _check_valid_timestamp(self, time_stamp: datetime, event: str) -> bool:
@@ -57,9 +58,7 @@ class Timer:
         week_durations = []
         current_week = datetime.strptime(self.db.date_today, Format.DATE)
         for date_delta in range(0, 7):
-            new_date = current_week - timedelta(
-                days=date_delta
-            )
+            new_date = current_week - timedelta(days=date_delta)
             self.db.date_today = new_date.strftime(Format.DATE)
             if current_week.strftime("%V") == new_date.strftime("%V"):
                 with suppress(Exception):

@@ -23,7 +23,9 @@ class TestDatabase(TestCase):
             [
                 call.connect(self.filename),
                 call.connect().cursor(),
-                call.connect().cursor().execute("CREATE TABLE timestamp(date, event, time)"),
+                call.connect()
+                .cursor()
+                .execute("CREATE TABLE timestamp(date, event, time)"),
             ]
         )
 
@@ -54,7 +56,7 @@ class TestDatabase(TestCase):
         con = patch("database.sqlite3").start()
         today = patch("database.date", wraps=date).start()
         today.today.return_value = "2024-01-01"
-        time_stamp = datetime.strptime("2024-01-01 17:00:00", "%Y-%m-%d %H:%M:%S")
+        time_stamp = "2024-01-01 17:00:00"
         db = Database(self.filename)
         expected_call = "INSERT INTO timestamp VALUES ('2024-01-01', 'start', '2024-01-01 17:00:00')"
         con.reset_mock()
@@ -76,7 +78,9 @@ class TestDatabase(TestCase):
         patch("database.path.isfile", return_value=True).start()
         con = patch("database.sqlite3").start()
         db = Database(self.filename)
-        expected_call = "SELECT event FROM timestamp WHERE date='2024-01-01' ORDER BY time DESC"
+        expected_call = (
+            "SELECT event FROM timestamp WHERE date='2024-01-01' ORDER BY time DESC"
+        )
         con.reset_mock()
         # when
         db.get_last_event()
@@ -97,18 +101,92 @@ class TestDatabase(TestCase):
         con = patch("database.sqlite3").start()
         db = Database(self.filename)
         for event in ("start", "stop"):
-            with self.subTest(event):
-                expected_call = (
-                    f"SELECT time FROM timestamp WHERE date='2024-01-01' AND event='{event}' ORDER BY time ASC"
-                )
+            for order in ("ASC", "DESC"):
+                with self.subTest(event):
+                    expected_call = (
+                            f"SELECT time FROM timestamp WHERE date='2024-01-01' AND event='{event}' ORDER BY time "
+                            f"{order}"
+                            )
                 con.reset_mock()
                 # when
-                db.get_times_by(event=event)
+                db.get_times_by(event=event, ascending="ASC"==order)
                 # then
                 con.assert_has_calls(
-                    [
-                        call.connect().cursor(),
-                        call.connect().cursor().execute(expected_call),
-                        call.connect().cursor().execute().fetchall(),
-                    ]
-                )
+                        [
+                            call.connect().cursor(),
+                            call.connect().cursor().execute(expected_call),
+                            call.connect().cursor().execute().fetchall(),
+                            ]
+                        )
+
+    def test_get_data_by_date(self) -> None:
+        # given
+        today = patch("database.date", wraps=date).start()
+        today.today.return_value = "2024-01-01"
+        patch("database.path.isfile", return_value=True).start()
+        con = patch("database.sqlite3").start()
+        db = Database(self.filename)
+        expected_call = (
+            "SELECT rowid, time, event FROM timestamp WHERE date='2024-01-01' ORDER BY time ASC"
+        )
+        con.reset_mock()
+        # when
+        db.get_data_by_date("2024-01-01")
+        # then
+        con.assert_has_calls(
+            [
+                call.connect().cursor(),
+                call.connect().cursor().execute(expected_call),
+                call.connect().cursor().execute().fetchall(),
+            ]
+        )
+
+    def test_delete_row(self) -> None:
+        # given
+        today = patch("database.date", wraps=date).start()
+        today.today.return_value = "2024-01-01"
+        patch("database.path.isfile", return_value=True).start()
+        con = patch("database.sqlite3").start()
+        con.connect().cursor().rowcount = 1
+
+        db = Database(self.filename)
+        expected_call = (
+            "DELETE FROM timestamp WHERE rowid='42'"
+        )
+        con.reset_mock()
+        # when
+        result = db.delete_row(42)
+        # then
+        self.assertEqual(True, result)
+        con.assert_has_calls(
+            [
+                call.connect().cursor(),
+                call.connect().cursor().execute(expected_call),
+                call.connect().commit(),
+            ]
+        )
+
+    def test_delete_row_not_successful(self) -> None:
+        # given
+        today = patch("database.date", wraps=date).start()
+        today.today.return_value = "2024-01-01"
+        patch("database.path.isfile", return_value=True).start()
+        con = patch("database.sqlite3").start()
+        con.connect().cursor().rowcount = 0
+
+        db = Database(self.filename)
+        expected_call = (
+            "DELETE FROM timestamp WHERE rowid='42'"
+        )
+        con.reset_mock()
+        # when
+        result = db.delete_row(42)
+        # then
+        self.assertEqual(False, result)
+        con.assert_has_calls(
+            [
+                call.connect().cursor(),
+                call.connect().cursor().execute(expected_call),
+                call.connect().commit(),
+            ]
+        )

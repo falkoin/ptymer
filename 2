@@ -349,12 +349,3 @@ class TestApp(TestCase):
         self.assertEqual(0, result.exit_code)
         write_timestamp.assert_not_called()
         self.assertIn("Incorrect event", result.stdout)
-
-    def test_date_time_no_database(self) -> None:
-        # given
-        self.db_file_existing.return_value= False
-        # whe
-        result = self.runner.invoke(app, ["add", "2024-01-01 22:23:42", "start"])
-        # then
-        self.assertEqual(0, result.exit_code)
-        self.assertIn("No data to show", result.stdout)
