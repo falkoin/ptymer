@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from typing import List, Tuple
 import typer
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from os import path
 from typing_extensions import Annotated
 from database import Database
@@ -127,15 +127,15 @@ def week():
 
 
 @app.command()
-def timestamps(date: str):
-    if not check_correct_date_format(date, Format.DATE):
+def timestamps(date_: Annotated[str, typer.Argument()] = date.today().strftime(Format.DATE)):
+    if not check_correct_date_format(date_, Format.DATE):
         print(f"{InfoText.WARN_SYMBOL} Incorrect date format. Use: YYYY-MM-DD")
         return
     if not db_file_existing():
         print(f"{InfoText.WARN_SYMBOL} No data to show")
         return
     db = Database(File.NAME)
-    entries = db.get_data_by_date(date)
+    entries = db.get_data_by_date(date_)
     if entries:
         output_day(entries)
     else:
