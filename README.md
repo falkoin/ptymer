@@ -18,7 +18,7 @@ list, when I have the need for them.
     app.py show # shows your current progress 
     app.py week # shows worktime per day for the current week
     app.py start/stop --delta INTEGER # sets timestamp x minutes earlier
-    app.py timestamps "YYYY-MM-DD" # lists timestamps for date
+    app.py timestamps "YYYY-MM-DD" # lists timestamps for date, default is today
     app.py delete INTEGER # deletes timestamp by id
     app.py add "YYYY-MM-DD HH:MM:SS" <event> ("start"/"stop") # adds timestamp
     app.py --help
@@ -34,7 +34,7 @@ list, when I have the need for them.
 - [x] Show statistics
 - [x] Make output more graphical
 - [x] Implement as "real" terminal commands
-- [x] Add more information to output
-- [ ] Add editing feature to entries
+- [x] Add editing feature to entries
+- [ ] Add more information to output
 - [ ] Create specific exceptions
 - [ ] Switch to better datetime handling

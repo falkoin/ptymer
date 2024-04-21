@@ -203,14 +203,14 @@ class TestApp(TestCase):
 
     def test_app_timestamps(self) -> None:
         # given
-        date = "2024-01-01 17:00:00"
-        patch("app.Database.get_data_by_date", return_value=[(date, "start")]).start()
+        date_ = "2024-01-01 17:00:00"
+        patch("app.Database.get_data_by_date", return_value=[(date_, "start")]).start()
         output_day = patch("app.output_day").start()
         # when
         result = self.runner.invoke(app, ["timestamps", "2024-01-01"])
         # then
         self.assertEqual(0, result.exit_code)
-        output_day.assert_called_with([(date, "start")])
+        output_day.assert_called_with([(date_, "start")])
 
     def test_app_timestamps_no_db_file(self) -> None:
         # given
@@ -229,6 +229,19 @@ class TestApp(TestCase):
         # then
         self.assertEqual(0, result.exit_code)
         self.assertTrue("No entries for today" in result.stdout)
+
+    def test_app_timestamps_with_default(self) -> None:
+        # given
+        output_day = patch("app.output_day").start()
+        today = patch("database.date", wraps=datetime).start()
+        today.today.return_value = date(2024, 1, 1)
+        date_ = "2024-01-01 17:00:00"
+        patch("app.Database.get_data_by_date", return_value=[(date_, "start")]).start()
+        # when
+        result = self.runner.invoke(app, ["timestamps"])
+        # then
+        self.assertEqual(0, result.exit_code)
+        output_day.assert_called_with([(date_, "start")])
 
     def test_app_timestamps_incorrect_date(self) -> None:
         # given
