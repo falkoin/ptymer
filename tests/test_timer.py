@@ -28,7 +28,7 @@ class TestTimer(TestCase):
         self.db.assert_has_calls(
             [
                 call.write_timestamp(
-                    event="start", time_stamp=datetime(2024, 1, 1, 17, 0)
+                    event="start", time_stamp="2024-01-01 17:00:00"
                 )
             ]
         )
