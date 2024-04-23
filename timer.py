@@ -3,12 +3,15 @@ from typing import List
 from database import Database
 from constants import Event, Format, InfoText
 from datetime import timedelta, datetime
+from yaml import safe_load
 
 
 class Timer:
 
     def __init__(self, db: Database):
         self.db = db
+        with open("config.yaml") as file:
+            self.config = safe_load(file)
 
     def check_state_allowed(self, event: str) -> bool:
         last_event = self.db.get_last_event()

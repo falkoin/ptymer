@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 import typer
 from datetime import datetime, timedelta, date
 from os import path
@@ -22,10 +22,16 @@ def output_with_timestamp(text: str, delta: int = 0) -> None:
     print(f"[{time_stamp}]: " + text)
 
 
-def output_week(timestamps: List[Tuple]) -> None:
+def output_week(timestamps: List[Tuple], config: Dict[str, Any]) -> None:
     table = Table("Day", "Worktime")
+    hours = []
     for date_, timestamp in timestamps[::-1]:
         table.add_row(date_.strftime("%A"), str(timestamp))
+        hours.append(timestamp)
+    if config:
+        goal_hours = sum([hour for hour in config["hours"].values()])
+
+        table.add_row("", str(timedelta(hours=goal_hours) - sum(hours, timedelta())))
     console.print(table)
 
 
@@ -120,7 +126,7 @@ def week():
     timer = Timer(db)
     week_durations = timer.calc_week()
     if week_durations:
-        output_week(week_durations)
+        output_week(week_durations, timer.config)
     else:
         print(f"{InfoText.WARN_SYMBOL} No data to show")
     timer.db.close()
