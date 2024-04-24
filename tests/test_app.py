@@ -1,9 +1,9 @@
 from unittest import TestCase
 from unittest.mock import call, patch
 
-from app import check_correct_date_format, db_file_existing, output_day, output_week, output_with_timestamp, remove_date_from_date_time, remove_time_from_date_time
+from app import check_correct_date_format, db_file_existing, output_day, output_week, output_with_timestamp, remove_date_from_date_time, remove_time_from_date_time, _format_timedelta
 from app import app
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from typer.testing import CliRunner
 
 
@@ -185,15 +185,17 @@ class TestApp(TestCase):
         with patch("app.Table") as mock:
             console = patch("app.console.print").start()
             data = [
-                (datetime.strptime("2024-01-03", "%Y-%m-%d"), 1),
-                (datetime.strptime("2024-01-02", "%Y-%m-%d"), 2),
-                (datetime.strptime("2024-01-01", "%Y-%m-%d"), 3),
+                    (datetime.strptime("2024-01-03", "%Y-%m-%d"), timedelta(hours=8)),
+                (datetime.strptime("2024-01-02", "%Y-%m-%d"), timedelta(hours=8)), 
+                (datetime.strptime("2024-01-01", "%Y-%m-%d"), timedelta(hours=8)),
             ]
             expected_calls = [
                 call("Day", "Worktime"),
-                call().add_row("Monday", "3"),
-                call().add_row("Tuesday", "2"),
-                call().add_row("Wednesday", "1"),
+                call().add_row("Monday", "8:00:00"),
+                call().add_row("Tuesday", "8:00:00"),
+                call().add_row("Wednesday", "8:00:00"),
+                call().add_section(),
+                call().add_row("Overall", "24:00:00"),
             ]
             # when
             output_week(data)
@@ -308,7 +310,7 @@ class TestApp(TestCase):
     def test_delete_deletes_successfully(self) -> None:
         # given
         write_timestamp = patch("app.Database.delete_row").start()
-        # whe
+        # when
         result = self.runner.invoke(app, ["delete", "42"])
         # then
         self.assertEqual(0, result.exit_code)
@@ -318,7 +320,7 @@ class TestApp(TestCase):
     def test_delete_deletes_not_successfully(self) -> None:
         # given
         write_timestamp = patch("app.Database.delete_row", return_value=False).start()
-        # whe
+        # when
         result = self.runner.invoke(app, ["delete", "42"])
         # then
         self.assertEqual(0, result.exit_code)
@@ -328,6 +330,7 @@ class TestApp(TestCase):
     def test_delete_deletes_no_database(self) -> None:
         # given
         self.db_file_existing.return_value = False
+        # when
         result = self.runner.invoke(app, ["delete", "42"])
         # then
         self.assertEqual(0, result.exit_code)
@@ -336,7 +339,7 @@ class TestApp(TestCase):
     def test_date_time_is_successful(self) -> None:
         # given
         write_timestamp = patch("app.Database.write_timestamp").start()
-        # whe
+        # when
         result = self.runner.invoke(app, ["add", "2024-01-01 22:23:42", "start"])
         # then
         self.assertEqual(0, result.exit_code)
@@ -346,7 +349,7 @@ class TestApp(TestCase):
     def test_date_time_incorrect_format(self) -> None:
         # given
         write_timestamp = patch("app.Database.write_timestamp").start()
-        # whe
+        # when
         result = self.runner.invoke(app, ["add", "2024+01+01 22:23:42", "start"])
         # then
         self.assertEqual(0, result.exit_code)
@@ -356,7 +359,7 @@ class TestApp(TestCase):
     def test_date_time_incorrect_event(self) -> None:
         # given
         write_timestamp = patch("app.Database.write_timestamp").start()
-        # whe
+        # when
         result = self.runner.invoke(app, ["add", "2024-01-01 22:23:42", "woop"])
         # then
         self.assertEqual(0, result.exit_code)
@@ -366,8 +369,16 @@ class TestApp(TestCase):
     def test_date_time_no_database(self) -> None:
         # given
         self.db_file_existing.return_value= False
-        # whe
+        # when
         result = self.runner.invoke(app, ["add", "2024-01-01 22:23:42", "start"])
         # then
         self.assertEqual(0, result.exit_code)
         self.assertIn("No data to show", result.stdout)
+
+    def test_format_timedetla(self) -> None:
+        # given
+        timedelta_ = timedelta(hours=25)
+        # when
+        result = _format_timedelta(timedelta_)
+        # then
+        self.assertEqual("25:00:00", result)
