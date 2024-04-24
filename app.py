@@ -24,10 +24,19 @@ def output_with_timestamp(text: str, delta: int = 0) -> None:
 
 def output_week(timestamps: List[Tuple]) -> None:
     table = Table("Day", "Worktime")
+    hours = []
     for date_, timestamp in timestamps[::-1]:
+        hours.append(timestamp)
         table.add_row(date_.strftime("%A"), str(timestamp))
+    table.add_section()
+    table.add_row("Overall", _format_timedelta(sum(hours, timedelta())))
     console.print(table)
 
+def _format_timedelta(timedelta_: timedelta):
+    DAYS_2_SECONDS = 86400
+    minutes, seconds = divmod(timedelta_.seconds + timedelta_.days * DAYS_2_SECONDS, 60)
+    hours, minutes = divmod(minutes, 60)
+    return '{:d}:{:02d}:{:02d}'.format(hours, minutes, seconds)
 
 def output_day(timestamps: List[Tuple]) -> None:
     table = Table("Index", "Time", "Event")
