@@ -35,6 +35,6 @@ list, when I have the need for them.
 - [x] Make output more graphical
 - [x] Implement as "real" terminal commands
 - [x] Add editing feature to entries
-- [ ] Add more information to output
+- [x] Add more information to output
 - [ ] Create specific exceptions
 - [ ] Switch to better datetime handling

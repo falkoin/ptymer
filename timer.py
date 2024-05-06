@@ -1,5 +1,5 @@
 from contextlib import suppress
-from typing import List
+from typing import List, Optional
 from database import Database
 from constants import Event, Format, InfoText
 from datetime import timedelta, datetime
@@ -26,6 +26,14 @@ class Timer:
             return self.calc_duration(times_stop, times_start)
         else:
             raise Exception(InfoText.WARN_DURATION)
+
+    def calc_pausetime(self) -> Optional[timedelta]:
+        times_start = self.db.get_times_by(event=Event.START, ascending=True)
+        times_stop = self.db.get_times_by(event=Event.STOP, ascending=True)
+        if len(times_stop) == 0:
+            return None
+        if times_start:
+            return self.calc_duration(times_start[1:], times_stop)
 
     def calc_duration(self, time_1: list[tuple], time_2: list[tuple]) -> timedelta:
         diff_times = [

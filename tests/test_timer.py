@@ -146,6 +146,25 @@ class TestTimer(TestCase):
         self.assertEqual({}, result)
         test.assert_called_with([("t3",), ("2024-01-01 17:00:00",)], [("t1",), ("t2",)])
 
+    def test_calc_pausetime_no_times(self) -> None:
+        # given
+        self.db.get_times_by.side_effect = ([], [])
+        timer = Timer(self.db)
+        # when
+        result = timer.calc_pausetime()
+        # then
+        self.assertEqual(None, result)
+
+    def test_calc_pausetime(self) -> None:
+        # given
+        patch("timer.Timer.calc_duration", return_value={}).start()
+        self.db.get_times_by.side_effect = (("t1",), ("t2",))
+        timer = Timer(self.db)
+        # when
+        result = timer.calc_pausetime()
+        # then
+        self.assertEqual({}, result)
+
     def test_calc_week(self) -> None:
         # gicen
         self.db.date_today = "2024-01-02"

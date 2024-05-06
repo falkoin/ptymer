@@ -115,8 +115,13 @@ def show():
         print(f"{InfoText.WARN_SYMBOL} No session existing for today, yet")
         return
     timer = Timer(db)
-    duration = timer.calc_worktime()
-    output_with_timestamp(f"Worked for {duration} hours")
+    work_duration = timer.calc_worktime()
+    pause_duration = timer.calc_pausetime()
+    if pause_duration:
+        output_with_timestamp(f"Worked for {work_duration} hours, pause [yellow]{pause_duration}[/yellow] hours")
+    else:
+        output_with_timestamp(f"Worked for {work_duration} hours")
+
     timer.db.close()
 
 
