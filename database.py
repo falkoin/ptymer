@@ -4,6 +4,7 @@ from typing import Any
 from datetime import date
 from os import path
 
+
 class Database:
 
     def __init__(self, filename):
@@ -55,9 +56,7 @@ class Database:
 
     def delete_row(self, row_id: int) -> bool:
         cur = self.con.cursor()
-        cur.execute(
-            f"DELETE FROM timestamp WHERE rowid='{row_id}'"
-        )
+        cur.execute(f"DELETE FROM timestamp WHERE rowid='{row_id}'")
         self.con.commit()
         if cur.rowcount > 0:
             return True

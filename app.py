@@ -1,72 +1,22 @@
 #!/usr/bin/env python
-from typing import List, Tuple
 import typer
-from datetime import datetime, timedelta, date
-from os import path
+from datetime import date
 from typing_extensions import Annotated
 from database import Database
 from constants import InfoText, Event, Format, File
 from timer import Timer
-from rich.table import Table
-from rich.console import Console
 from rich import print
-import re
-
-
-def db_file_existing() -> bool:
-    return path.isfile(f"./{File.NAME}")
-
-
-def output_with_timestamp(text: str, delta: int = 0) -> None:
-    time_stamp = (datetime.now() - timedelta(minutes=delta)).strftime(Format.TIME)
-    print(f"[{time_stamp}]: " + text)
-
-
-def output_week(timestamps: List[Tuple]) -> None:
-    table = Table("Day", "Worktime")
-    hours = []
-    for date_, timestamp in timestamps[::-1]:
-        hours.append(timestamp)
-        table.add_row(date_.strftime("%A"), str(timestamp))
-    table.add_section()
-    table.add_row("Overall", _format_timedelta(sum(hours, timedelta())))
-    console.print(table)
-
-def _format_timedelta(timedelta_: timedelta):
-    DAYS_2_SECONDS = 86400
-    minutes, seconds = divmod(timedelta_.seconds + timedelta_.days * DAYS_2_SECONDS, 60)
-    hours, minutes = divmod(minutes, 60)
-    return '{:d}:{:02d}:{:02d}'.format(hours, minutes, seconds)
-
-def output_day(timestamps: List[Tuple]) -> None:
-    table = Table("Index", "Time", "Event")
-    for index, time, event in timestamps:
-        table.add_row(
-            str(index), remove_date_from_date_time(time), event
-        )
-    console.print(table)
-
-
-def remove_date_from_date_time(date_time: str) -> str:
-    pattern = r"\d{4}-\d{2}-\d{2}\s"
-    return re.sub(pattern, "", date_time)
-
-
-def remove_time_from_date_time(date_time: str) -> str:
-    pattern = r"\s\d{2}:\d{2}:\d{2}$"
-    return re.sub(pattern, "", date_time)
-
-
-def check_correct_date_format(date: str, format: str) -> bool:
-    try:
-        datetime.strptime(date, format)
-    except:
-        return False
-    return True
+from utility import (
+    output_with_timestamp,
+    db_file_existing,
+    output_week,
+    output_day,
+    check_correct_date_format,
+    remove_time_from_date_time,
+)
 
 
 app = typer.Typer()
-console = Console()
 
 
 @app.command()
@@ -118,7 +68,9 @@ def show():
     work_duration = timer.calc_worktime()
     pause_duration = timer.calc_pausetime()
     if pause_duration:
-        output_with_timestamp(f"Worked for {work_duration} hours, pause [yellow]{pause_duration}[/yellow] hours")
+        output_with_timestamp(
+            f"Worked for {work_duration} hours, pause [yellow]{pause_duration}[/yellow] hours"
+        )
     else:
         output_with_timestamp(f"Worked for {work_duration} hours")
 
@@ -141,7 +93,9 @@ def week():
 
 
 @app.command()
-def timestamps(date_: Annotated[str, typer.Argument()] = date.today().strftime(Format.DATE)):
+def timestamps(
+    date_: Annotated[str, typer.Argument()] = date.today().strftime(Format.DATE)
+):
     if not check_correct_date_format(date_, Format.DATE):
         print(f"{InfoText.WARN_SYMBOL} Incorrect date format. Use: YYYY-MM-DD")
         return
@@ -171,9 +125,11 @@ def delete(rowid: int):
 @app.command()
 def add(date_time: str, event: str):
     if not check_correct_date_format(date_time, Format.DATETIME):
-        print(f"{InfoText.WARN_SYMBOL} Incorrect timestamp format. Use: YYYY-MM-DD HH:MM:SS")
+        print(
+            f"{InfoText.WARN_SYMBOL} Incorrect timestamp format. Use: YYYY-MM-DD HH:MM:SS"
+        )
         return
-    if not event in ("start", "stop"):
+    if event not in ("start", "stop"):
         print(f"{InfoText.WARN_SYMBOL} Incorrect event")
         return
     if not db_file_existing():

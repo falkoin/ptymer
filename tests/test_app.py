@@ -1,9 +1,8 @@
 from unittest import TestCase
-from unittest.mock import call, patch
+from unittest.mock import patch
 
-from app import check_correct_date_format, db_file_existing, output_day, output_week, output_with_timestamp, remove_date_from_date_time, remove_time_from_date_time, _format_timedelta
 from app import app
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 from typer.testing import CliRunner
 
 
@@ -12,42 +11,13 @@ class TestApp(TestCase):
     def setUp(self) -> None:
         self.runner = CliRunner()
         self.db_file_existing = patch("app.db_file_existing").start()
-        now = patch("app.datetime", wraps=datetime).start()
+        now = patch("utility.datetime", wraps=datetime).start()
         now.now.return_value = datetime.strptime(
             "2024-01-01 17:00:00", "%Y-%m-%d %H:%M:%S"
         )
 
     def tearDown(self) -> None:
         patch.stopall()
-
-    def test_db_file_existing(self) -> None:
-        # given
-        db_file = patch("app.path.isfile", return_value=True).start()
-        # when
-        result = db_file_existing()
-        # then
-        db_file.assert_called_with("./ptymer.db")
-        self.assertEqual(True, result)
-
-    def test_db_file_not_existing(self) -> None:
-        # given
-        db_file = patch("app.path.isfile", return_value=False).start()
-        # when
-        result = db_file_existing()
-        # then
-        db_file.assert_called_with("./ptymer.db")
-        self.assertEqual(False, result)
-
-    def test_output_with_timestamp(self) -> None:
-        # given
-        std_out = patch("app.print").start()
-        today = patch("database.date", wraps=datetime).start()
-        today.today.return_value = date(2024, 1, 1)
-        text = "text"
-        # when
-        output_with_timestamp(text)
-        # then
-        std_out.assert_called_once_with(f"[17:00:00]: {text}")
 
     def test_app_with_start(self) -> None:
         # given
@@ -187,29 +157,6 @@ class TestApp(TestCase):
         self.assertEqual(0, result.exit_code)
         output_week.assert_called_with([(datetime_, "something")])
 
-    def test_output_week(self) -> None:
-        # given
-        with patch("app.Table") as mock:
-            console = patch("app.console.print").start()
-            data = [
-                    (datetime.strptime("2024-01-03", "%Y-%m-%d"), timedelta(hours=8)),
-                (datetime.strptime("2024-01-02", "%Y-%m-%d"), timedelta(hours=8)), 
-                (datetime.strptime("2024-01-01", "%Y-%m-%d"), timedelta(hours=8)),
-            ]
-            expected_calls = [
-                call("Day", "Worktime"),
-                call().add_row("Monday", "8:00:00"),
-                call().add_row("Tuesday", "8:00:00"),
-                call().add_row("Wednesday", "8:00:00"),
-                call().add_section(),
-                call().add_row("Overall", "24:00:00"),
-            ]
-            # when
-            output_week(data)
-            # then
-            console.assert_called_once()
-            mock.assert_has_calls(expected_calls)
-
     def test_app_timestamps(self) -> None:
         # given
         date_ = "2024-01-01 17:00:00"
@@ -254,65 +201,12 @@ class TestApp(TestCase):
 
     def test_app_timestamps_incorrect_date(self) -> None:
         # given
-        patch("app.check_correct_date_format", return_value=False).start()
+        patch("utility.check_correct_date_format", return_value=False).start()
         # when
         result = self.runner.invoke(app, ["timestamps", "20240101"])
         # then
         self.assertEqual(0, result.exit_code)
         self.assertIn("Incorrect date format. Use: YYYY-MM-DD", result.stdout)
-
-    def test_remove_date_from_date_time(self) -> None:
-        # given
-        date_time = "2024-01-01 22:22:22"
-        # when
-        result = remove_date_from_date_time(date_time)
-        # then
-        self.assertEqual("22:22:22", result)
-
-    def test_output_day(self) -> None:
-        # given
-        with patch("app.Table") as mock:
-            console = patch("app.console.print").start()
-            data = [
-                    (54, "2024-01-03 12:00:12", "start"),
-                    (55, "2024-01-03 22:22:22", "stop"),
-                    (56, "2024-01-03 23:23:42", "start"),
-            ]
-            expected_calls = [
-                call("Index", "Time", "Event"),
-                call().add_row("54", "12:00:12", "start"),
-                call().add_row("55", "22:22:22", "stop"),
-                call().add_row("56", "23:23:42", "start"),
-            ]
-            # when
-            output_day(data)
-            # then
-            console.assert_called_once()
-            mock.assert_has_calls(expected_calls)
-
-    def test_check_correct_date_format_with_correct_input(self) -> None:
-        # given
-        date = "2024-01-01"
-        # when
-        result = check_correct_date_format(date, "%Y-%m-%d")
-        # then
-        self.assertEqual(True, result)
-
-    def test_check_correct_date_format_with_incorrect_input(self) -> None:
-        # given
-        date = "20240101"
-        # when
-        result = check_correct_date_format(date, "%Y-%m-%d")
-        # then
-        self.assertEqual(False, result)
-
-    def test_remove_time_from_date_time(self) -> None:
-        # given
-        date_time = "2024-01-01 23:42:05"
-        # when
-        result = remove_time_from_date_time(date_time)
-        # then
-        self.assertEqual("2024-01-01", result)
 
     def test_delete_deletes_successfully(self) -> None:
         # given
@@ -361,7 +255,9 @@ class TestApp(TestCase):
         # then
         self.assertEqual(0, result.exit_code)
         write_timestamp.assert_not_called()
-        self.assertIn("Incorrect timestamp format. Use: YYYY-MM-DD HH:MM:SS", result.stdout)
+        self.assertIn(
+            "Incorrect timestamp format. Use: YYYY-MM-DD HH:MM:SS", result.stdout
+        )
 
     def test_date_time_incorrect_event(self) -> None:
         # given
@@ -375,17 +271,9 @@ class TestApp(TestCase):
 
     def test_date_time_no_database(self) -> None:
         # given
-        self.db_file_existing.return_value= False
+        self.db_file_existing.return_value = False
         # when
         result = self.runner.invoke(app, ["add", "2024-01-01 22:23:42", "start"])
         # then
         self.assertEqual(0, result.exit_code)
         self.assertIn("No data to show", result.stdout)
-
-    def test_format_timedetla(self) -> None:
-        # given
-        timedelta_ = timedelta(hours=25)
-        # when
-        result = _format_timedelta(timedelta_)
-        # then
-        self.assertEqual("25:00:00", result)
