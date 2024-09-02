@@ -98,5 +98,14 @@ def week():
     timer.db.close()
 
 
+@app.command()
+def list_db(date: str):
+    if not db_file_existing():
+        print(f"{InfoText.WARN_SYMBOL} No data to show")
+        return
+    db = Database(File.NAME)
+    entries = db.get_data_by_date(date)
+    print(entries)
+
 if __name__ == "__main__":
     app()

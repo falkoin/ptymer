@@ -46,3 +46,9 @@ class Database:
         return cur.execute(
             f"SELECT event FROM timestamp WHERE date='{self.date_today}' ORDER BY time DESC"
         ).fetchone()
+
+    def get_data_by_date(self, date: str) -> list[Any]:
+        cur = self.con.cursor()
+        return cur.execute(
+            f"SELECT time FROM timestamp WHERE date='{date}' ORDER BY time ASC"
+        ).fetchall()
