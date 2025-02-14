@@ -12,6 +12,8 @@ class Timer:
 
     def check_state_allowed(self, event: str) -> bool:
         last_event = self.db.get_last_event()
+        if last_event is None and event == "stop":
+            return False
         if last_event is not None:
             return last_event[0] != event
         return True
