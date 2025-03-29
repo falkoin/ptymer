@@ -8,10 +8,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python: ["3.10", "3.11"]
+        python: ["3.11", "3.12", "3.13"]
 
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v4
       - name: Setup Python
         uses: actions/setup-python@main
         with:
@@ -22,4 +22,18 @@ jobs:
           pipenv install --system
       - name: Run unittest
         run: python -m unittest
+
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python environment
+        uses: actions/setup-python@v4
+      - name: Black
+        uses: psf/black@stable
+        with:
+          options: "--check --verbose"
+      - name: flake8 Lint
+        uses: py-actions/flake8@v2
 

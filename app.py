@@ -94,7 +94,7 @@ def week():
 
 @app.command()
 def timestamps(
-    date_: Annotated[str, typer.Argument()] = date.today().strftime(Format.DATE)
+    date_: Annotated[str, typer.Argument()] = date.today().strftime(Format.DATE),
 ):
     if not check_correct_date_format(date_, Format.DATE):
         print(f"{InfoText.WARN_SYMBOL} Incorrect date format. Use: YYYY-MM-DD")
