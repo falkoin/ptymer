@@ -113,7 +113,7 @@ class TestTimer(TestCase):
         # then
         self.assertFalse(result)
 
-    def test_calc_work_time_no_times(self) -> None:
+    def test_calc_worktime_no_times(self) -> None:
         # given
         self.db.get_times_by.side_effect = ([], [])
         timer = Timer(self.db)
@@ -123,17 +123,17 @@ class TestTimer(TestCase):
         # then
         self.assertEqual("Couldn't calculate duration for today", str(e.exception))
 
-    def test_calc_work_time(self) -> None:
+    def test_calc_worktime(self) -> None:
         # given
         patch("timer.Timer.calc_duration", return_value={}).start()
-        self.db.get_times_by.side_effect = (("t1",), ("t2",))
+        self.db.get_times_by.side_effect = ([("t1",)], [("t2",)])
         timer = Timer(self.db)
         # when
         result = timer.calc_worktime()
         # then
         self.assertEqual({}, result)
 
-    def test_calc_work_time_more_start_times(self) -> None:
+    def test_calc_worktime_more_start_times(self) -> None:
         # given
         test = patch("timer.Timer.calc_duration", return_value={}).start()
         self.db.get_times_by.side_effect = ([("t1",), ("t2",)], [("t3",)])

@@ -1,5 +1,5 @@
 from contextlib import suppress
-from typing import List, Optional
+from typing import List, Literal, Optional
 from database import Database
 from constants import Event, Format, InfoText
 from datetime import timedelta, datetime
@@ -10,7 +10,7 @@ class Timer:
     def __init__(self, db: Database):
         self.db = db
 
-    def check_state_allowed(self, event: str) -> bool:
+    def check_state_allowed(self, event: Literal["start", "stop", None]) -> bool:
         last_event = self.db.get_last_event()
         if last_event is None and event == "stop":
             return False
@@ -23,11 +23,21 @@ class Timer:
         times_stop = self.db.get_times_by(event=Event.STOP, ascending=True)
 
         if times_start:
-            if len(times_start) > len(times_stop):
-                times_stop.append((f"{datetime.now().strftime(Format.DATETIME)}",))
+            if self._timer_not_stopped(times_start, times_stop):
+                current_time = self._calc_time_stamp()
+                current_time = (current_time.strftime(Format.DATETIME),)
+
+                times_stop.append(current_time)
             return self.calc_duration(times_stop, times_start)
         else:
             raise Exception(InfoText.WARN_DURATION)
+
+    @staticmethod
+    def _timer_not_stopped(times_start: list, times_stop: list) -> bool:
+        if len(times_start) > len(times_stop):
+            return True
+        else:
+            return False
 
     def calc_pausetime(self) -> Optional[timedelta]:
         times_start = self.db.get_times_by(event=Event.START, ascending=True)
@@ -61,7 +71,7 @@ class Timer:
         return True
 
     @staticmethod
-    def _calc_time_stamp(delta: int) -> datetime:
+    def _calc_time_stamp(delta: int = 0) -> datetime:
         return datetime.now() - timedelta(minutes=delta)
 
     def calc_week(self) -> List:
