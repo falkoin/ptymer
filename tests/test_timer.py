@@ -44,7 +44,9 @@ class TestTimer(TestCase):
         # given
         self.db.get_last_event.side_effect = [("start",), ("start",), None, None]
         timer = Timer(self.db)
-        for event, expected in zip(("start", "stop", "start", "stop"), (False, True, True, False)):
+        for event, expected in zip(
+            ("start", "stop", "start", "stop"), (False, True, True, False)
+        ):
             with self.subTest(event):
                 # when
                 result = timer.check_state_allowed(event)
