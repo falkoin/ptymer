@@ -1,8 +1,8 @@
 import sqlite3
-from sqlite3 import Connection
-from typing import Any
 from datetime import date
 from os import path
+from sqlite3 import Connection
+from typing import Any
 
 
 class Database:
